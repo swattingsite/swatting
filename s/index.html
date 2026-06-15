@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scars</title>
+  <style>
+    /* ─── EASY CUSTOMIZATION ─────────────────────────────────────── */
+    :root {
+      --pfp-url: url("swagsociety.png"); /* ← swap with your PNG path or URL */
+      --name: "Scars";             /* ← displayed in JS below */
+      --audio-url: "audio.mp3";  /* ← swap with your audio path or URL */
+
+      /* Animated background: change stop colors freely */
+      --bg-a: #000000;
+      --bg-b: #000000;
+      --bg-c: #000000;
+
+      /* Particle/orb accent color */
+      --orb: rgba(255, 255, 255, 0.35);
+    }
+    /* ─────────────────────────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── Animated gradient background ─────────────────────────────── */
+    body {
+      background: linear-gradient(135deg, var(--bg-a), var(--bg-b), var(--bg-c));
+      background-size: 400% 400%;
+      animation: gradShift 12s ease infinite;
+    }
+    @keyframes gradShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* ── Floating orb layer ─────────────────────────────────────────── */
+    #orbs {
+      position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      background: var(--orb);
+      filter: blur(60px);
+      animation: drift linear infinite;
+    }
+    @keyframes drift {
+      0%   { transform: translate(0, 0) scale(1); }
+      33%  { transform: translate(60px, -80px) scale(1.15); }
+      66%  { transform: translate(-40px, 40px) scale(0.9); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+
+    /* ── Card ───────────────────────────────────────────────────────── */
+    .card {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 1rem;
+      padding: 2.5rem 2rem 2rem;
+      width: min(340px, 92vw);
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(18px) saturate(1.4);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+    }
+
+    /* ── Center wrapper ─────────────────────────────────────────────── */
+    #scene {
+      position: fixed; inset: 0; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Profile picture ────────────────────────────────────────────── */
+    .pfp-ring {
+      width: 110px; height: 110px;
+      padding: 3px;
+      border-radius: 50%;
+      background: conic-gradient(#a06eff, #ff6ec7, #6ec6ff, #a06eff);
+      animation: spinRing 4s linear infinite;
+    }
+    @keyframes spinRing {
+      to { transform: rotate(360deg); }
+    }
+    .pfp {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      background: #1a1a2e; /* fallback if image doesn't load */
+    }
+
+    /* ── Text ───────────────────────────────────────────────────────── */
+    .name {
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #fff;
+      text-align: center;
+    }
+    .desc {
+      font-size: 0.92rem;
+      line-height: 1.65;
+      color: rgba(255,255,255,0.72);
+      text-align: center;
+      max-width: 260px;
+    }
+
+    /* ── Audio badge ────────────────────────────────────────────────── */
+    #audio-btn {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 0.5rem;
+      padding: 6px 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 99px;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+    #audio-btn:hover { background: rgba(255,255,255,0.2); }
+    #audio-btn .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #a06eff;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.7); }
+    }
+    #audio-btn.paused .dot { animation: none; opacity: 0.4; }
+
+    /* ── Entrance animation ─────────────────────────────────────────── */
+    .card {
+      animation: fadeUp 0.7s cubic-bezier(0.22, 0.8, 0.4, 1) both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Floating orbs (generated in JS) ────────────────────────────── -->
+<div id="orbs"></div>
+
+<!-- ── Main scene ─────────────────────────────────────────────────── -->
+<div id="scene">
+  <div class="card">
+    <!-- Profile picture -->
+    <div class="pfp-ring">
+      <!--
+        ↓ Change src to your PNG path/URL.
+          e.g. src="avatar.png"  or  src="https://example.com/me.png"
+      -->
+      <img class="pfp" id="pfp-img"
+           src="swagsociety.png"
+           alt="Profile picture"
+           onerror="this.style.background='linear-gradient(135deg,#a06eff,#6ec6ff)'"
+      />
+    </div>
+
+    <!-- Name — edit the text below -->
+    <div class="name">Scars</div>
+
+    <!-- Description — edit the text below -->
+    <div class="desc">
+      Dev of swatti.ng, Reseller
+    </div>
+
+    <!-- Audio toggle button -->
+    <button id="audio-btn" aria-label="Toggle audio">
+      <span class="dot"></span>
+      <span id="audio-label">Play/Pause</span>
+    </button>
+  </div>
+</div>
+
+<!--
+  ↓ Change src to your audio file path/URL.
+    e.g. src="song.mp3"  or  src="https://example.com/song.mp3"
+-->
+<audio id="bg-audio" src="audio.mp3" loop preload="auto"></audio>
+
+<script>
+  /* ── Orb spawner ─────────────────────────────────────────────────── */
+  const orbContainer = document.getElementById('orbs');
+  const orbDefs = [
+    { w: 420, top: '10%',  left: '5%',  dur: 18 },
+    { w: 300, top: '55%',  left: '60%', dur: 22 },
+    { w: 500, top: '70%',  left: '-5%', dur: 26 },
+    { w: 260, top: '5%',   left: '70%', dur: 15 },
+    { w: 340, top: '40%',  left: '40%', dur: 20 },
+  ];
+  orbDefs.forEach(({ w, top, left, dur }) => {
+    const d = document.createElement('div');
+    d.className = 'orb';
+    Object.assign(d.style, {
+      width: w + 'px', height: w + 'px', top, left,
+      animationDuration: dur + 's',
+      animationDelay: -(Math.random() * dur) + 's',
+    });
+    orbContainer.appendChild(d);
+  });
+
+  /* ── Audio autoplay (with user-gesture fallback) ─────────────────── */
+  const audio = document.getElementById('bg-audio');
+  const btn   = document.getElementById('audio-btn');
+  const lbl   = document.getElementById('audio-label');
+
+  function tryPlay() {
+    audio.play().catch(() => {
+      btn.classList.add('paused');
+      lbl.textContent = 'Click to play';
+    });
+  }
+  tryPlay();
+
+  btn.addEventListener('click', () => {
+    if (audio.paused) {
+      audio.play();
+      btn.classList.remove('paused');
+      lbl.textContent = 'Playing music';
+    } else {
+      audio.pause();
+      btn.classList.add('paused');
+      lbl.textContent = 'Click to play';
+    }
+  });
+</script>
+</body>
+</html>
